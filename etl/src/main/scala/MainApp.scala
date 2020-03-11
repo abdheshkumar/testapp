@@ -87,6 +87,8 @@ object MainApp extends App {
     .filter($"c" === "1")
     .orderBy(col("count").desc)
     .show()*/
+  val YES = "yes"
+  val NO = "no"
   val s = spark.read
   //.schema(rsvpEncoder.schema)
     .json(
@@ -98,7 +100,7 @@ object MainApp extends App {
     .format("console")
     .trigger(Trigger.ProcessingTime(5, TimeUnit.SECONDS))
     .start()*/
-  s.transform(trendingTopicsByCountryImproveVersion("us")).show()
+  s.transform(trendingTopicsByCountry("us")).show()
 
   /**
     * Trending topics by country
@@ -124,32 +126,10 @@ object MainApp extends App {
   def transformRsvpResponse(df: DataFrame): DataFrame = {
     val transformYesNoToNumeric: String => String => Int = yesNo =>
       columnValue => if (yesNo == columnValue) 1 else 0
-    val yes = udf(transformYesNoToNumeric("yes"))
-    val no = udf(transformYesNoToNumeric("no"))
-    df.withColumn("yes", yes(col("response")))
-      .withColumn("no", no($"response"))
-  }
-
-  /**
-    * Group by country and event_id
-    * @param df
-    * @return
-    */
-  def findMostPopularLocationsInTheWorld(df: DataFrame): DataFrame = {
-    df.select(
-        $"group.group_country".as("country"),
-        $"event.event_id".as("event_id"),
-        $"response",
-        $"event.event_name".as("event_name")
-      )
-      .transform(transformRsvpResponse)
-      .groupBy("country", "event_id")
-      .agg(
-        first(col("event_name")).as("event_name"),
-        sum(col("yes")).alias("yes"),
-        sum("no").alias("no")
-      )
-      .orderBy(col("yes").desc)
+    val yes = udf(transformYesNoToNumeric(YES))
+    val no = udf(transformYesNoToNumeric(NO))
+    df.withColumn(YES, yes($"response"))
+      .withColumn(NO, no($"response"))
   }
 
   def getFirst(columnName: String): Column =
@@ -182,10 +162,10 @@ object MainApp extends App {
         getFirst("group_lon"),
         getFirst("group_lat"),
         getFirst("eventName"),
-        sum("yes").alias("yes"),
-        sum("no").alias("no")
+        sum(YES).alias(YES),
+        sum(NO).alias(NO)
       )
-      .orderBy(col("yes").desc)
+      .orderBy(col(YES).desc)
   }
 
 }
