@@ -1,8 +1,8 @@
 import sbt.Keys.version
 val AkkaVersion = "2.5.26"
 val sparkV = "2.4.5"
-val scalaTestV = "3.1.0"
-val scalacheckV = "1.14.3"
+val scalaTestV = "3.0.5"
+val scalacheckV = "1.14.0"
 val circeVersion = "0.12.3"
 
 lazy val commonSettings =
@@ -101,7 +101,8 @@ lazy val etl = Project("etl", file("etl"))
       "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkV, //Structured Streaming + Kafka Integration Guide
       "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
-      "org.scalacheck" %% "scalacheck" % scalacheckV % Test
+      "org.scalacheck" %% "scalacheck" % scalacheckV % Test,
+      "com.holdenkarau" %% "spark-testing-base" % "2.4.5_0.14.0" % Test
     )
   )
   .enablePlugins(JavaAppPackaging)
