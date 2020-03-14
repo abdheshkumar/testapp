@@ -3,3 +3,4 @@ target/
 project/target/
 **/target/*
 **/node_modules
+_logs

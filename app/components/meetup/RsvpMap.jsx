@@ -1,10 +1,24 @@
-import React, { Fragment } from 'react';
-import axios from 'axios';
-import { Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import { useHistory } from 'react-router-dom';
+import React from 'react';
+import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
 
-import { Context } from './utils';
+export const RsvpMap = ({ state }) => {
+  return (
+    <Map center={[51.505, -0.09]} zoom={0.7}>
+      <RsvpMarkersList markers={state} />
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    </Map>
+  );
+};
+
+const RsvpMarkersList = ({ markers }) => {
+  return (
+    <>
+      {markers.map(({ rsvp_id, ...props }) => (
+        <RsvpPopupMarker key={rsvp_id} {...props} />
+      ))}
+    </>
+  );
+};
 
 const icon = country =>
   L.divIcon({
@@ -16,22 +30,13 @@ const icon = country =>
     shadowAnchor: [4, 62], // the same for the shadow
     popupAnchor: [-3, -76], // point from which the popup should open relative to the iconAnchor
   });
-const PopupMarker = ({
-  eventId,
-  eventName,
-  groupId,
-  groupName,
-  groupCountry,
-  groupLon,
-  groupLat,
-  yesResponse,
-  noResponse,
-}) => {
-  const dispatch = React.useContext(Context);
+
+const RsvpPopupMarker = props => {
+  const { venue_name, lon, lat, venue_id } = props.venue;
   return (
     <Marker
-      icon={icon(groupCountry)}
-      position={{ lat: groupLat, lng: groupLon }}
+      //icon={icon(groupCountry)}
+      position={{ lat: lat, lng: lon }}
       onMouseOver={e => {
         e.target.openPopup();
       }}
@@ -42,13 +47,9 @@ const PopupMarker = ({
         console.log(
           'dispatching an action for showing trending topics of the country...',
         );
-        dispatch({ type: 'countrySelected', payload: groupCountry });
+        //dispatch({ type: 'countrySelected', payload: groupCountry });
       }}>
-      <Popup>
-        {eventName}({yesResponse})
-      </Popup>
+      <Popup>{venue_name}</Popup>
     </Marker>
   );
 };
-
-export default PopupMarker;

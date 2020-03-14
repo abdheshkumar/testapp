@@ -26,7 +26,7 @@ import ing.api.MeetUpRoutes.Error
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
-trait MeetUpRoutes extends Directives with AkkaKafkaConsumer {
+trait MeetUpRoutes extends Directives with AkkaKafkaConsumer with Lazy {
   implicit def system: ActorSystem
   implicit def m: Materializer
 
@@ -48,12 +48,10 @@ trait MeetUpRoutes extends Directives with AkkaKafkaConsumer {
           Sink.foreachAsync(1)({
             case TextMessage.Strict(text) => {
 
-              println("********" + text)
               control.future.flatMap(control => {
                 control
                   .drainAndShutdown(Future { println("Finished consumer") })
                   .map(res => {
-                    println(s">>>>>>>>>>${res}")
                     ()
                   })
               })
@@ -98,7 +96,6 @@ trait MeetUpRoutes extends Directives with AkkaKafkaConsumer {
     next =>
       respondWithHeaders(
         `Access-Control-Allow-Methods`(OPTIONS, POST, GET, PUT, DELETE),
-        // `Access-Control-Allow-Headers`("Content-Type", "X-Requested-With", "domain_code", "ApiRequestContext"),
         `Access-Control-Allow-Origin`.*
       )(next)
 

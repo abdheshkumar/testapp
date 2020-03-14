@@ -35,7 +35,7 @@ lazy val ingestion = Project("ingestion", file("ingestion"))
       //"com.datastax.spark" %% "spark-cassandra-connector" % sparkV,
       "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkV, //Structured Streaming + Kafka Integration Guide
       "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
-      "com.github.scopt" %% "scopt" % "3.7.1",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
@@ -62,7 +62,7 @@ lazy val api = Project("api", file("api"))
       "com.typesafe.akka" %% "akka-http" % "10.1.11",
       //"com.datastax.spark" %% "spark-cassandra-connector" % sparkV,
       "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkV, //Structured Streaming + Kafka Integration Guide
-      "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
       ("de.heikoseeberger" %% "akka-http-circe" % "1.31.0")
         .excludeAll(ExclusionRule("com.typesafe.akka")),
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
@@ -96,11 +96,10 @@ lazy val etl = Project("etl", file("etl"))
       "com.typesafe.akka" %% "akka-stream-kafka" % "2.0.2",
       "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka" %% "akka-http" % "10.1.11",
-      "com.datastax.spark" %% "spark-cassandra-connector" % "2.4.3",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
       "org.postgresql" % "postgresql" % "42.2.11",
       "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkV, //Structured Streaming + Kafka Integration Guide
       "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
-      "com.github.scopt" %% "scopt" % "3.7.1",
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckV % Test
     )

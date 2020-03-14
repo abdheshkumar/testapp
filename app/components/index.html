@@ -9,55 +9,24 @@
     />
     <link rel="stylesheet" href="//unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
     <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css"
+    />
+    <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
     <style>
-      body {
-        padding-bottom: 30px;
-      }
-      h1,
-      h2,
-      p {
-        font-family: sans-serif;
-        text-align: center;
-      }
       .leaflet-container {
-        height: 710px;
-        width: 1000px;
-        margin: 0 auto;
+        height: 600px;
+        width: 100%;
+        margin: 0 0;
       }
-      .marker-pin {
-        width: 30px;
-        height: 30px;
-        border-radius: 50% 50% 50% 0;
-        background: #c30b82;
+      .leaflet-pane img {
         position: absolute;
-        transform: rotate(-45deg);
-        left: 50%;
-        top: 50%;
-        margin: -15px 0 0 -15px;
-        color: black;
       }
-
-      .marker-pin::after {
-        content: '';
-        width: 24px;
-        height: 24px;
-        margin: 3px 0 0 3px;
-        background: #fff;
-        position: absolute;
-        border-radius: 50%;
-      }
-
-      .custom-div-icon i {
-        position: absolute;
-        width: 22px;
-        font-size: 22px;
-        left: 0;
-        right: 0;
-        margin: 10px auto;
-        text-align: center;
+      .leaflet-container img {
+        max-width: none !important;
       }
     </style>
   </head>

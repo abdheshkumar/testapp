@@ -1,27 +1,48 @@
 import React, { Fragment } from 'react';
 import axios from 'axios';
 import { Map, TileLayer } from 'react-leaflet';
-import { getApiPath } from './utils';
+import { getApiPath, Context } from './utils';
 import MarkersList from './MarkersList';
-import HeatmapLayer from 'react-leaflet-heatmap-layer';
-import { addressPoints } from '../data/realworld.10000';
-
-
+import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import { TrendingTopic } from './TrendingTopic';
+import { makeStyles } from '@material-ui/core/styles';
 const reducer = (state, action) => {
-  if (action.type === 'replace') {
-    return actio
-  } else {
-    return state;
+  switch (action.type) {
+    case 'eventsLoaded':
+      return { ...state, events: action.payload };
+    case 'trendingTopicsLoaded':
+      return { ...state, trendingTopics: action.payload };
+    case 'countrySelected':
+      return { ...state, country: action.payload };
+    default:
+      return state;
   }
 };
 
+const useStyles = makeStyles(theme => ({
+  root: {
+    flexGrow: 1,
+  },
+  paper: {
+    padding: theme.spacing(2),
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+    paddingBottom: 50,
+  },
+}));
+
+const initialState = { events: [], country: undefined };
+
 export const MostPopularMeetupInTheWorld = () => {
-  const [state, dispatch] = React.useReducer(reducer, []);
+  const classes = useStyles();
+  const [state, dispatch] = React.useReducer(reducer, initialState);
 
   React.useEffect(() => {
     const fetchData = async () => {
       const response = await axios.get(getApiPath('events'));
-      dispatch({ type: 'replace', payload: response.data });
+      dispatch({ type: 'eventsLoaded', payload: response.data });
     };
     fetchData().catch(error => {
       console.log(error);
@@ -29,13 +50,24 @@ export const MostPopularMeetupInTheWorld = () => {
   }, []);
 
   return (
-    <Map center={[51.505, -0.09]} zoom={2.457}>
-      <MarkersList markers={state} />
-
-      <TileLayer
-          attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-    </Map>
+    <Context.Provider value={dispatch}>
+      <Grid container justify="center" spacing={2}>
+        <Grid sm={8} item>
+          <Paper className={classes.paper}>
+            <Map center={[51.505, -0.09]} zoom={0.7}>
+              <MarkersList markers={state.events} />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            </Map>
+          </Paper>
+        </Grid>
+        <Grid sm={4} item>
+          <Paper
+            className={classes.paper}
+            style={{ overflowY: 'scroll', height: '600px' }}>
+            <TrendingTopic country={state.country} />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Context.Provider>
   );
 };
