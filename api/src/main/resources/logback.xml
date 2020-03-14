@@ -6,7 +6,7 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>TRACE</level>
         </filter>
-        <file>_logs/users-data-processor/${myTimestamp}.log</file>
+        <file>_logs/api/${myTimestamp}.log</file>
         <encoder>
             <pattern>%-5level [%F:%L] %d{HH:mm:ss.SSS} %logger{36}%n - %msg%n</pattern>
         </encoder>
@@ -18,36 +18,22 @@
     </appender>
 
 
-    <appender name="HubbubFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="INGFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>TRACE</level>
         </filter>
-        <file>_logs/users-data-processor/hubbub.${myTimestamp}.log</file>
+        <file>_logs/api/ing.${myTimestamp}.log</file>
         <encoder>
             <pattern>%-5level [%F:%L] %d{HH:mm:ss.SSS} %logger{36}%n - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>_logs/users-data-processor/hubbub.${myTimestamp}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>_logs/api/ing.${myTimestamp}.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
-    <appender name="grayLog" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>TRACE</level>
-        </filter>
-        <host>udp:graylog.hubbub.ai</host>
-        <port>12201</port>
-        <version>1.1</version>
-        <facility>auth-app</facility>
-        <extractStackTrace>true</extractStackTrace>
-        <filterStackTrace>true</filterStackTrace>
-        <mdcProfiling>true</mdcProfiling>
-        <timestampPattern>yyyy-MM-dd HH:mm:ss,SSSS</timestampPattern>
-        <maximumMessageSize>8192</maximumMessageSize>
-        <includeFullMdc>true</includeFullMdc>
-    </appender>
+
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -59,18 +45,25 @@
     </appender>
 
 
-    <logger name="hubbub" level="TRACE">
+    <logger name="ing" level="TRACE">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="HubbubFile"/>
+        <appender-ref ref="INGFile"/>
     </logger>
 
-    <logger name="dataprocessor" level="TRACE">
+    <logger name="ing" level="TRACE">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="HubbubFile"/>
+        <appender-ref ref="INGFile"/>
+    </logger>
+
+
+    <logger level="DEBUG">
+        <appender-ref ref="FILE"/>
     </logger>
 
     <logger level="INFO">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="HubbubFile"/>
+        <appender-ref ref="INGFile"/>
     </logger>
+
+
 </configuration>

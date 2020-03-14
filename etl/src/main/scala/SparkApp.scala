@@ -1,7 +1,15 @@
 import com.datastax.spark.connector.cql.CassandraConnector
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.streaming.OutputMode
-import org.apache.spark.sql.{Column, DataFrame, Encoder, Encoders, ForeachWriter, Row, SaveMode}
+import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery}
+import org.apache.spark.sql.{
+  Column,
+  DataFrame,
+  Encoder,
+  Encoders,
+  ForeachWriter,
+  Row,
+  SaveMode
+}
 case class Rsvp(venue: Venue,
                 response: String,
                 member: Member,
@@ -28,7 +36,7 @@ case class Group(group_id: String,
                  group_topics: Seq[GroupTopics])
 
 case class Member(member_name: String, member_id: String, photo: String)
-//https://stackoverflow.com/questions/31844318/update-cassandra-table-using-spark-cassandra-connector
+
 object MainApp extends App {
   import org.apache.spark.sql.SparkSession
   import org.apache.spark.sql.functions._
@@ -49,11 +57,6 @@ object MainApp extends App {
   val YES = "yes"
   val NO = "no"
 
-  /* CassandraConnector(spark.sparkContext).withSessionDo { session =>
-    session.execute(
-      "CREATE KEYSPACE IF NOT EXISTS meetup WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 }"
-    )
-  }*/
   val stream = spark.readStream
     .format("kafka")
     .option("kafka.bootstrap.servers", "localhost:9092")
@@ -75,44 +78,42 @@ object MainApp extends App {
     .option("checkpointLocation", "ing_meetup/spark/checkpoints/topic2")
     .start()*/
 
-
+  val postgresProperties = scala.collection.Map(
+    "url" -> "jdbc:postgresql://localhost/postgres",
+    "dbtable" -> "meetup.meetup_by_event_id",
+    "driver" -> "org.postgresql.Driver",
+    "user" -> "postgres",
+    "password" -> "postgres"
+  )
   val trendingStream = stream
-    .transform(findMostPopularLocationsInTheWorldByEventId)
-    .writeStream
-    .outputMode(OutputMode.Update())
-    .foreachBatch { (df: DataFrame, batchId: Long) =>
-        df.write
-          .format("jdbc")
-        .option("url", "jdbc:postgresql://127.0.0.0/meetup")
-        .option("driver","")
-          .option("dbtable", "schema.tablename")
-     /* df.write
-        .format("org.apache.spark.sql.cassandra")
-        .options(
-          Map(
-            "table" -> "meetup_by_event_id",
-            "keyspace" -> "meetup",
-            "cluster" -> "cassandra-cluster"
-          )
-        )
-        .save()*/
+  writeIntoDB(stream, "meetup.meetup_by_event_id")(
+    findMostPopularLocationsInTheWorldByEventId
+  )
 
-    }
-    .start()
-  /*  val kafkaStream = stream
-    .transform(trendingTopicsByCountry("us"))
-    .selectExpr("to_json(struct(*)) AS value")
-    .writeStream
-    .format("kafka")
-    .outputMode("update")
-    .option("kafka.bootstrap.servers", "localhost:9092")
-    .option("topic", "topic1")
-    .option("checkpointLocation", "ing_meetup/spark/checkpoints")
-    .start()*/
+  val kafkaStream =
+    writeIntoDB(stream, "meetup.trending")(trendingTopicsByCountry("us"))
 
   spark.streams.awaitAnyTermination()
   //kafkaStreamTrending.awaitTermination()
   //kafkaStream.awaitTermination()
+
+  def writeIntoDB(df: DataFrame, tableName: String)(
+    transformFunc: DataFrame => DataFrame
+  ): StreamingQuery = {
+    df.transform(transformFunc)
+      .writeStream
+      .option("checkpointLocation", s"ing_meetup/spark/checkpoints/$tableName")
+      .outputMode(OutputMode.Update())
+      .foreachBatch { (df: DataFrame, _: Long) =>
+        df.write
+          .format("jdbc")
+          .options(postgresProperties + ("dbtable" -> tableName))
+          .mode(SaveMode.Overwrite)
+          .save()
+
+      }
+      .start()
+  }
 
   /**
     * Trending topics by country
