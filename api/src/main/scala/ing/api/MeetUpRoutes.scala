@@ -9,23 +9,49 @@ import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.common.serialization.StringDeserializer
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 trait MeetUpRoutes extends Directives with AkkaKafkaConsumer {
   implicit def system: ActorSystem
   implicit def m: Materializer
 
-  def rsvpAkkaKafkaStream: Flow[Any, TextMessage, Future[Done]] =
-    Flow.fromSinkAndSourceMat(Sink.foreach(println), readRsvp("test"))(
-      Keep.left
-    )
+  def rsvpAkkaKafkaStream = {
 
-  def rsvpStream: Route =
+    val controlPromise = Promise[Consumer.Control]()
+
+    controlPromise -> readRsvp("test")
+      .mapMaterializedValue(controlPromise.success)
+
+  }
+
+  def rsvpStream: Route = {
+    implicit val ec = system.dispatcher
     path("rsvp") {
-      handleWebSocketMessages(rsvpAkkaKafkaStream)
-    }
+      extractUpgradeToWebSocket { websocket =>
+        val (control, source) = rsvpAkkaKafkaStream
+        val endMsgHandler: Sink[Message, Future[Done]] =
+          Sink.foreachAsync(1)({
+            case TextMessage.Strict(text) => {
 
-  def routes: Route = concat(rsvpStream)
+              println("********" + text)
+              control.future.flatMap(control => {
+                control
+                  .drainAndShutdown(Future { println("Finished consumer") })
+                  .map(res => {
+                    println(s">>>>>>>>>>${res}")
+                    ()
+                  })
+              })
+            }
+
+          })
+
+        complete(websocket.handleMessagesWithSinkSource(endMsgHandler, source))
+      }
+    }
+  }
+
+  def routes: Route = rsvpStream
 }
 
 object MeetUpRoutes {
@@ -42,8 +68,7 @@ trait AkkaKafkaConsumer {
   def consumerSettings(
     implicit system: ActorSystem
   ): ConsumerSettings[String, String] = {
-    val config = system.settings.config.getConfig("our-kafka-consumer")
-    ConsumerSettings(config, new StringDeserializer, new StringDeserializer)
+    ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
       .withGroupId("group2")
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
   }
@@ -57,7 +82,7 @@ trait AkkaKafkaConsumer {
 
   def readRsvp(
     topic: String
-  )(implicit system: ActorSystem): Source[TextMessage, Consumer.Control] = {
+  )(implicit system: ActorSystem): Source[Message, Consumer.Control] = {
     consumerStream(topic).map { elem =>
       TextMessage.Strict(elem.value())
     }
