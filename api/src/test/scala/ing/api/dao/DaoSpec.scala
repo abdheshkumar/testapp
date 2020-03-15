@@ -1,3 +1,5 @@
-package ing.api.dao class DaoSpec {
+package ing.api.dao
+
+class DaoSpec {
 
 }

@@ -14,7 +14,7 @@ trait TableSchema { self: DBProfile =>
       extends Table[TrendingTopic](tag, Some("meetup"), "trending") {
     def country: Rep[String] =
       column[String]("country")
-    def topics: Rep[String] = column[String]("topics")
+    def topics: Rep[String] = column[String]("topic_name")
     def count: Rep[Int] = column[Int]("count")
 
     def * : ProvenShape[TrendingTopic] =
@@ -54,7 +54,7 @@ trait TableSchema { self: DBProfile =>
 }
 
 object TableSchema {
-  case class TrendingTopic(country: String, topics: String, count: Int)
+  case class TrendingTopic(country: String, topicName: String, count: Int)
 
   case class MeetUp(eventId: String,
                     eventName: String,

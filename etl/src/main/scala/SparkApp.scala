@@ -1,20 +1,24 @@
+import ing.etl.{
+  Constants,
+  KafkaStreamReader,
+  LiveSparkBoot,
+  QueryProcessor,
+  StreamProcessor
+}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.streaming.StreamingQuery
 
-object MainApp extends StreamProcessor with SparkBoot {
+object MainApp extends {
 
-  def main(args: Array[String]): Unit = {}
+  def main(args: Array[String]): Unit = {
+    val processor = new QueryProcessor with KafkaStreamReader
+    with StreamProcessor with LiveSparkBoot {
+      val inputStream: DataFrame = readFromKafkaStream
 
-  val stream: DataFrame = kafkaStream
-
-  val trendingStream: StreamingQuery =
-    writeIntoDB(stream, "meetup.meetup_by_event_id")(
-      findMostPopularLocationsInTheWorldByEventId
-    )
-
-  val writeTrendingTopicsStream: StreamingQuery =
-    writeIntoDB(stream, "meetup.trending")(trendingTopicsByCountry)
-
-  spark.streams.awaitAnyTermination()
+      override val jdbcOption: collection.Map[String, String] =
+        Constants.postgresProperties
+    }
+    processor.startAll
+    processor.spark.streams.awaitAnyTermination()
+  }
 
 }

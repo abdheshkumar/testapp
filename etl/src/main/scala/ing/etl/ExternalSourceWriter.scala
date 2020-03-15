@@ -1,11 +1,14 @@
-import Constants.postgresProperties
+package ing.etl
+
 import org.apache.spark.sql.streaming.{OutputMode, StreamingQuery}
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, Row, SaveMode}
 
 import scala.collection.Map
+
 trait ExternalJdbcOption {
   def options: Map[String, String]
 }
+
 trait ExternalJdbcWriter { self: ExternalJdbcOption =>
 
   /**
@@ -33,13 +36,15 @@ trait ExternalJdbcWriter { self: ExternalJdbcOption =>
   def writeDataIntoExternalSource(df: DataFrame, tableName: String)(
     transformFunc: DataFrame => DataFrame
   ): StreamingQuery = {
+    println("*************\n\n\n\n\n\n\n\n\n***"+df.columns.toList)
     df.transform(transformFunc)
       .writeStream
-      .option("checkpointLocation", s"ing_meetup/spark/checkpoints/$tableName")
+      //.option("checkpointLocation", s"ing_meetup/spark/checkpoints/$tableName")
       .outputMode(OutputMode.Update())
       .foreachBatch { (df: DataFrame, _: Long) =>
-        val writeBatch = writeBatchDataIntoJdbc(tableName)
-        writeBatch(df).save()
+      println(s"****Persisiting...${df.take(1).toList}")
+        val writeBatch = writeBatchDataIntoJdbc(tableName)(df)
+        writeBatch.save()
       }
       .start()
   }

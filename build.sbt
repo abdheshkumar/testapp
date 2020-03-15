@@ -70,6 +70,7 @@ lazy val api = Project("api", file("api"))
       "com.typesafe.slick" %% "slick" % "3.3.1",
       "org.slf4j" % "slf4j-nop" % "1.7.26",
       "org.postgresql" % "postgresql" % "42.2.11",
+      "com.h2database" % "h2" % "1.4.200" % Test,
       "com.typesafe.slick" %% "slick-hikaricp" % "3.3.1",
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckV % Test
@@ -88,6 +89,7 @@ lazy val etl = Project("etl", file("etl"))
     name := "etl",
     version := "0.1",
     scalaVersion := "2.12.10",
+    resolvers += "Spark Packages Repo" at "https://dl.bintray.com/spark-packages/maven",
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core" % sparkV,
       "org.apache.spark" %% "spark-sql" % sparkV,
@@ -102,7 +104,9 @@ lazy val etl = Project("etl", file("etl"))
       "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckV % Test,
-      "com.holdenkarau" %% "spark-testing-base" % "2.4.5_0.14.0" % Test
+      "com.holdenkarau" %% "spark-testing-base" % "2.4.5_0.14.0" % Test,
+      "com.h2database" % "h2" % "1.4.200" % Test,
+      "MrPowers" % "spark-fast-tests" % "0.20.0-s_2.12" % Test
     )
   )
   .enablePlugins(JavaAppPackaging)

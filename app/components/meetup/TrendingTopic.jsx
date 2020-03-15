@@ -24,7 +24,7 @@ export const TrendingTopic = ({ country }) => {
       </Typography>
       <ListComponent
         data={data}
-        fromMessageToListData={d => ({ id: d.topics, primary: d.topics })}
+        fromMessageToListData={d => ({ id: d.topicName, primary: d.topicName })}
       />
     </>
   );
