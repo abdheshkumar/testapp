@@ -11,20 +11,14 @@ trait QueryProcessor { self: StreamProcessor =>
   def jdbcOption: Map[String, String]
   def aggregatedStreamQuery: StreamingQuery =
     processMostPopularEventsStream(inputStream)(
-      tableName =>
-        ExternalJdbcWriter(
-          jdbcOption + ("dbtable" -> tableName)
-      )
+      tableName => ExternalJdbcWriter(jdbcOption + ("dbtable" -> tableName))
     )
 
   def writeTrendingTopicsStream: StreamingQuery =
     processTrendingTopicsStream(inputStream)(
-      tableName =>
-        ExternalJdbcWriter(
-          jdbcOption + ("dbtable" -> tableName)
-      )
+      tableName => ExternalJdbcWriter(jdbcOption + ("dbtable" -> tableName))
     )
   def startAll: Seq[StreamingQuery] =
-    Seq(aggregatedStreamQuery/*, writeTrendingTopicsStream*/)
+    Seq(aggregatedStreamQuery, writeTrendingTopicsStream)
 
 }

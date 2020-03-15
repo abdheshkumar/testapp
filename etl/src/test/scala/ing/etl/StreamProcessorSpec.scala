@@ -1,14 +1,17 @@
 package ing.etl
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
-import ing.etl.Models.Rsvp
-import org.scalatest.FlatSpec
+import ing.etl.Models.{Group, GroupTopics, Rsvp}
+import org.scalatest.{FlatSpec, Matchers}
+
+import scala.collection.immutable.ListMap
 
 class StreamProcessorSpec
     extends FlatSpec
     with InMemoryQueryProcessor
     with SparkSessionTestWrapper
-    with DatasetComparer {
+    with DatasetComparer
+    with Matchers {
 
   import StreamProcessorSpec._
   import spark.implicits._
@@ -23,6 +26,70 @@ class StreamProcessorSpec
         .toDF("country", "topic_name", "count")
 
     assertSmallDatasetEquality(result, excepted)
+  }
+
+  it should "aggregate topics by country" in {
+    val streamProcessor = StreamProcessor.create(spark)
+
+    val testData = List(
+      Group(
+        group_id = "group-01",
+        group_urlname = "",
+        group_name = "Group-01",
+        group_city = "any city",
+        group_lat = 0,
+        group_lon = 0,
+        group_country = "us",
+        group_topics = Seq(
+          GroupTopics("classic-books", "Classic Books"),
+          GroupTopics("classic-books", "Toxic Relationships")
+        )
+      ),
+      Group(
+        group_id = "group-02",
+        group_urlname = "",
+        group_name = "Group-02",
+        group_city = "any city",
+        group_lat = 0,
+        group_lon = 0,
+        group_country = "us",
+        group_topics = Seq(
+          GroupTopics("classic-books", "Classic Books"),
+          GroupTopics("classic-books", "Toxic Relationships")
+        )
+      ),
+      Group(
+        group_id = "group-02",
+        group_urlname = "",
+        group_name = "Group-03",
+        group_city = "any city",
+        group_lat = 0,
+        group_lon = 0,
+        group_country = "us",
+        group_topics = Seq(
+          GroupTopics("nightlife", "Nightlife"),
+          GroupTopics("diningout", "Dining Out")
+        )
+      ),
+      Group(
+        group_id = "group-03",
+        group_urlname = "",
+        group_name = "Help coronavirus affected people",
+        group_city = "London",
+        group_lat = 0,
+        group_lon = 0,
+        group_country = "uk",
+        group_topics = Seq(GroupTopics("covid", "Covid19"))
+      )
+    )
+    val testDF = testData.toDF().as("group")
+
+    val expected =
+      convertTopicByCountry(testData).toDF(trendingTopicColumns: _*)
+
+    val result = streamProcessor.trendingTopicsByCountry(testDF)
+
+    assertSmallDatasetEquality(result, expected)
   }
 
   it should "find most popular events" in {
@@ -58,12 +125,36 @@ class StreamProcessorSpec
     assertSmallDatasetEquality(result, excepted)
   }
 
+  it should "aggregate same events" in {
+    val streamProcessor = StreamProcessor.create(spark)
 
+    val data = spark.read.json("etl/src/test/resources/data6.json")
+
+    val result =
+      streamProcessor.findMostPopularLocationsInTheWorldByEventId(data)
+    result.count() shouldBe 5
+  }
 
 }
 
 object StreamProcessorSpec {
   import ing.etl.Models._
+
+  def convertTopicByCountry(data: List[Group]) = {
+    data
+      .flatMap(g => g.group_topics.map(gt => (g.group_country, gt.topic_name)))
+      .foldLeft(ListMap.empty[(String, String), Long]) {
+        case (acc, (country, topicName)) =>
+          val key = (country, topicName)
+          acc.find(_._1 == key) match {
+            case Some(value) =>
+              acc + (key -> (value._2 + 1))
+            case None => acc + (key -> 1)
+          }
+      }
+      .map { case ((country, topicName), count) => (country, topicName, count) }
+      .toList
+  }
   val trendingTopicColumns = Seq("country", "topic_name", "count")
   val meetUpEventByColumns = Seq(
     "event_id",

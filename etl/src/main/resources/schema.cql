@@ -17,7 +17,6 @@ CREATE TABLE meetup.meetup_by_event_id
 CREATE TABLE meetup.trending
 (
     country  text,
-    topics   text,
-    count    text,
-    group_id int
+    topic_name   text,
+    count    text
 );
