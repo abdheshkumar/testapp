@@ -5,7 +5,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
-trait StreamProcessor {
+trait StreamProcessor extends HelperFunctions {
   self: SparkBoot =>
   import spark.implicits._
 
@@ -52,22 +52,7 @@ trait StreamProcessor {
         explode($"group.group_topics.topic_name").as("topic_name")
       )
       .groupBy("country", "topic_name")
-      .agg(count($"topic_name").as("count"))
-  }
-
-  /**
-    * Categories response yes/no to 1/0
-    * @param df
-    * @return
-    */
-  def transformRsvpResponse(df: DataFrame): DataFrame = {
-    val transformYesNoToNumeric: String => String => Int = yesNo =>
-      columnValue => if (yesNo == columnValue) 1 else 0
-    val yes = udf(transformYesNoToNumeric(YES))
-    val no = udf(transformYesNoToNumeric(NO))
-    df.withColumn(YES, yes($"response"))
-      .withColumn(NO, no($"response"))
-      .drop("response")
+      .agg(count("topic_name").as("count"))
   }
 
   def getFirst(columnName: String): Column =

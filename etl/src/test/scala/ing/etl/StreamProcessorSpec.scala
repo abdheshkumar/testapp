@@ -58,14 +58,7 @@ class StreamProcessorSpec
     assertSmallDatasetEquality(result, excepted)
   }
 
-  "transformRsvpResponse" should "transfer response yes/no to 1/0" in {
-    val streamProcessor = StreamProcessor.create(spark)
-    val data = List("yes", "yes", "no").toDF("response")
-    val result = streamProcessor.transformRsvpResponse(data)
-    val excepted = Seq((1, 0), (1, 0), (0, 1)).toDF("yes", "no")
-    excepted.printSchema()
-    assertSmallDatasetEquality(result, excepted)
-  }
+
 
 }
 
