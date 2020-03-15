@@ -4,3 +4,4 @@ project/target/
 **/target/*
 **/node_modules
 _logs
+ing_meetup/**
