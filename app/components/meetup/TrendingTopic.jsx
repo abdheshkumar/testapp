@@ -8,10 +8,11 @@ export const TrendingTopic = ({ country }) => {
   const classes = useStyles();
   const [data, setData] = React.useState([]);
 
+
   React.useEffect(() => {
+
     const fetchTrendingTopics = async () => {
       const response = await Axios.get(getApiPath(`trending/${country}`));
-      console.log(response.data);
       setData(response.data);
     };
     country && fetchTrendingTopics();
@@ -24,7 +25,11 @@ export const TrendingTopic = ({ country }) => {
       </Typography>
       <ListComponent
         data={data}
-        fromMessageToListData={d => ({ id: d.topicName, primary: d.topicName })}
+        fromMessageToListData={d => ({
+          id: d.topicName,
+          primary: d.topicName,
+          secondary: d.count,
+        })}
       />
     </>
   );

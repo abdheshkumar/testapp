@@ -20,7 +20,9 @@ const useStyles = makeStyles(theme => ({
   subheader: {
     backgroundColor: theme.palette.background.paper,
   },
-
+  typography: {
+    padding: theme.spacing(2),
+  },
   grow: {
     flexGrow: 1,
   },

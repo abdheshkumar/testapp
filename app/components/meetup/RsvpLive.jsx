@@ -5,7 +5,7 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-/* import {useStyles} from './utils'; */
+import data from '../data/data';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -28,32 +28,35 @@ const RsvpLive = () => {
   const classes = useStyles();
   const LIMIT = 500;
   const DROP_LIMIT = 100;
+
   const [state, setState] = React.useState({ rsvps: [], counter: 0 });
   const { rsvps } = state;
 
+  const handleInvalidData = (message, prev) => {
+    const { rsvps, counter } = prev;
+    const { rsvp_id, venue } = message;
+    const skipDuplicateAndInvalidData =
+      rsvp_id && venue && !rsvps.find(r => r.rsvp_id === rsvp_id);
+    const data = skipDuplicateAndInvalidData
+      ? { rsvps: [message, ...rsvps], counter: counter + 1 }
+      : prev;
+
+    return LIMIT < counter
+      ? {
+          rsvps: data.rsvps.splice(LIMIT - DROP_LIMIT, LIMIT),
+          counter: counter - DROP_LIMIT,
+        }
+      : data;
+  };
   React.useEffect(() => {
     const ws = new WebSocket('ws://localhost:8085/rsvp');
     ws.onopen = () => {
       console.log('Connected..');
     };
+
     ws.onmessage = event => {
       const message = JSON.parse(event.data);
-
-      setState(prev => {
-        const { rsvps, counter } = prev;
-        const { rsvp_id, venue } = message;
-        const skipDuplicateAndInvalidData =
-          rsvp_id && venue && !rsvps.find(r => r.rsvp_id === rsvp_id);
-        const data = skipDuplicateAndInvalidData
-          ? { rsvps: [message, ...rsvps], counter: counter + 1 }
-          : prev;
-        return LIMIT < counter
-          ? {
-              rsvps: data.rsvps.splice(LIMIT - DROP_LIMIT, LIMIT),
-              counter: counter - DROP_LIMIT,
-            }
-          : data;
-      });
+      setState(prev => handleInvalidData(message, prev));
     };
 
     window.onbeforeunload = () => {
@@ -64,6 +67,7 @@ const RsvpLive = () => {
       console.log('Disconnected..');
     };
     return () => {
+      ws.send("END")
       const wsState = ws.readyState;
       return wsState !== WebSocket.CLOSED || wsState !== WebSocket.CONNECTING
         ? ws.close()

@@ -8,6 +8,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { TrendingTopic } from './TrendingTopic';
 import { makeStyles } from '@material-ui/core/styles';
+
 const reducer = (state, action) => {
   switch (action.type) {
     case 'eventsLoaded':
@@ -33,7 +34,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const initialState = { events: [], country: undefined };
+const initialState = { events: [], country: undefined, trendingTopics:[] };
 
 export const MostPopularMeetupInTheWorld = () => {
   const classes = useStyles();
