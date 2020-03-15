@@ -19,35 +19,15 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  #  cassandra:
-  #    image: cassandra:latest
-  #    ports:
-  #      - 7000:7000
-  #      - 7001:7001
-  #      - 7199:7199
-  #      - 9042:9042
-  #      - 9160:9160
-  #    environment:
-  #      - CASSANDRA_CLUSTER_NAME='cassandra-cluster'
-  #      #- CASSANDRA_NUM_TOKENS=256
-  #      # - CASSANDRA_LISTEN_ADDRESS=0.0.0.0  # HOSTNAME OR IP OF MACHINE
-  #      - CASSANDRA_RPC_ADDRESS=0.0.0.0
-
   postgres:
-    image: postgres:latest
     container_name: postgres
+    build:
+      context: ./
+      dockerfile: Dockerfile
     ports:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: "postgres"
-
-#  api:
-#    image: api:0.1
-#    container_name: api
-#    ports:
-#      - 8085:8085
-#    networks:
-#      - test-network
 
 networks:
   default:

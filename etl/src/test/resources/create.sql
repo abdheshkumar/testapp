@@ -17,5 +17,5 @@ CREATE TABLE if not exists meetup.trending
 (
     country  nvarchar(256),
     topic_name nvarchar(256),
-    count    nvarchar(256)
+    count    int
 );
