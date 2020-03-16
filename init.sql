@@ -2,7 +2,7 @@ CREATE SCHEMA if not exists meetup;
 
 CREATE TABLE if not exists meetup.meetup_by_event_id
 (
-    event_id      text PRIMARY KEY ,
+    event_id      text,
     group_country text,
     group_city    text,
     group_id      text,

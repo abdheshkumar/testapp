@@ -1,5 +1,5 @@
 ### Start Kafka in docker
-`docker-compose -f kafka-docker up` 
+`docker-compose -f kafka-docker.yml up` 
 
 ## Run Ingestion service
 This service is responsive for pushing a streaming data from meetup stream API into Kafka.
