@@ -1,22 +1,19 @@
-import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
-import akka.kafka.ConsumerMessage.{CommittableMessage, CommittableOffset}
-import akka.kafka.{ConsumerMessage, ConsumerSettings, Subscriptions}
+import akka.kafka.ConsumerMessage.CommittableOffset
 import akka.kafka.scaladsl.Consumer
+import akka.kafka.{ConsumerMessage, ConsumerSettings, Subscriptions}
 import akka.stream.ActorMaterializer
-import akka.stream.alpakka.slick.javadsl.SlickSession
-import akka.stream.alpakka.slick.scaladsl.Slick
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.{Done, NotUsed}
 import com.typesafe.config.Config
 import io.circe.Decoder.Result
-import io.circe.HCursor
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.common.serialization.StringDeserializer
-import slick.jdbc.{GetResult, JdbcBackend, JdbcProfile}
+import io.circe.{Decoder, HCursor}
 import io.circe.parser._
-import io.circe.syntax._
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
+import org.apache.kafka.common.serialization.StringDeserializer
 import slick.basic.DatabaseConfig
-import io.circe.Decoder
+import slick.jdbc.{JdbcBackend, JdbcProfile}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 sealed abstract class DBSession {
@@ -42,21 +39,20 @@ object DBSession {
 class IngestionKafkaToPostgres {
 
   private def consumerSettings(
-    implicit system: ActorSystem
-  ): ConsumerSettings[String, String] = {
+    topic: String
+  )(implicit system: ActorSystem): ConsumerSettings[String, String] = {
     ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
-      .withGroupId("meetup_by_event_id_group")
-      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+      .withGroupId(s"${topic}_group")
+      .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")/*
       .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-      .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "5000")
+      .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "5000")*/
   }
 
   def consumerStream(topic: String)(
     implicit system: ActorSystem
-  ): Source[ConsumerMessage.CommittableMessage[String, String],
-            Consumer.Control] = {
+  ): Source[ConsumerRecord[String, String], Consumer.Control] = {
     Consumer
-      .committableSource(consumerSettings, Subscriptions.topics(topic))
+      .plainSource(consumerSettings(topic), Subscriptions.topics(topic))
   }
 
   implicit val meetUpEncoder: Decoder[MeetUp] = new Decoder[MeetUp] {
@@ -113,7 +109,7 @@ class IngestionKafkaToPostgres {
                     yesResponse: Int,
                     noResponse: Int)
 
-  def meetByEventTableFlow(
+/*  def meetByEventTableFlow(
     dbSession: DBSession
   )(implicit ec: ExecutionContext): Flow[CommittableMessage[String, String],
                                          (Int, CommittableOffset),
@@ -148,8 +144,8 @@ class IngestionKafkaToPostgres {
           case Left(value) => Future.failed(value)
         }
     }
-  }
-
+  }*/
+/*
   def meetUpByEventTableStream(topic: String, dbSession: DBSession)(
     implicit system: ActorSystem,
     ec: ExecutionContext,
@@ -158,35 +154,43 @@ class IngestionKafkaToPostgres {
     consumerStream(topic)
       .via(meetByEventTableFlow(dbSession))
       .log(topic)
-      .runWith(Sink.ignore)
+      .runWith(Sink.ignore)*/
 
   def trendingTableFlow(
     dbSession: DBSession
-  )(implicit ec: ExecutionContext): Flow[CommittableMessage[String, String],
-                                         (Int, CommittableOffset),
+  )(implicit ec: ExecutionContext): Flow[ConsumerRecord[String, String],
+                                         Int,
                                          NotUsed] = {
     import dbSession.profile.api._
-    Flow[ConsumerMessage.CommittableMessage[String, String]].mapAsync(1) {
+    Flow[ConsumerRecord[String, String]].mapAsync(1) {
       kafkaMessage =>
+        println("***********before**************\n\n\n\n\\"+ kafkaMessage)
         val trendingEither =
-          parse(kafkaMessage.record.value()).flatMap(_.as[TrendingTopic])
-
+          parse(kafkaMessage.value()).flatMap(_.as[TrendingTopic])
+        println("*****************after********\n\n\n\n\\"+ trendingEither)
         trendingEither match {
           case Right(trending) =>
+
             val statement = sqlu"""
                  INSERT INTO meetup.trending(
                  country,
-                 urlkey,
                  topic_name,
-                 count) VALUES(${trending.country},${trending.urlkey},${trending.topicName},${trending.count}) ON CONFLICT (country,urlkey)
+                 count) VALUES(${trending.country}, ${trending.topicName},${trending.count}) ON CONFLICT (country,topic_name)
                  DO UPDATE SET
                  count=trending.count
           """
 
-            dbSession.db
+            val r = dbSession.db
               .run(statement)
-              .map(f => (f, kafkaMessage.committableOffset))
-          case Left(value) => Future.failed(value)
+              .map(f => f)
+            r.transform(t=>{
+              println("**************tras*")
+
+              t
+            })
+          case Left(value) =>
+            println("*******failed******************\n\n\n\n\\"+ value)
+            Future.failed(value)
         }
     }
   }
@@ -198,6 +202,6 @@ class IngestionKafkaToPostgres {
   ): Future[Done] =
     consumerStream(topic)
       .via(trendingTableFlow(dbSession))
-      .log(topic)
+      //.log(topic)
       .runWith(Sink.ignore)
 }
