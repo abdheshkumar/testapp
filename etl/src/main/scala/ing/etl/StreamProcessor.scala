@@ -39,13 +39,12 @@ trait StreamProcessor extends HelperFunctions {
     * @return
     */
   def trendingTopicsByCountry(df: DataFrame): DataFrame = {
-   val d = df.select(
+    df.select(
         $"group.group_country".as("country"),
-        explode($"group.group_topics").as("topics")
-      ).select("country","topics.*").withColumn("c1",lit(1))
-    d.show()
-      d.groupBy("country", "topic_name")
-      .agg(sum("c1").as("count"),first("urlkey"))
+        explode($"group.group_topics.topic_name").as("topic_name")
+      )
+      .groupBy("country", "topic_name")
+      .agg(count("topic_name").as("count"))
   }
 
   def getFirst(columnName: String): Column =

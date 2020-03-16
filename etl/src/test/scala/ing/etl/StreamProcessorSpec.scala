@@ -15,37 +15,19 @@ class StreamProcessorSpec
 
   import StreamProcessorSpec._
   import spark.implicits._
-  case class GP(u: String, t: String)
-  case class Test(c: Int, value: String, groups: Seq[GP])
-  "this" should "work" in {
-    import org.apache.spark.sql.functions._
-    val d = spark.createDataFrame(
-      List(
-        Test(1, "A", Seq(GP("u1", "t1"), GP("u2", "t2"))),
-        Test(1, "D", Seq(GP("u1", "t1"), GP("u2", "t2"))),
-        Test(2, "B", Seq(GP("u3", "t3"), GP("u4", "t4"))),
-        Test(3, "C", Seq.empty),
-        Test(2, "E", Seq(GP("u3", "t3"), GP("u4", "t4")))
-      )
-    )
-    val s =
-      d.select($"c", explode($"groups").as("groups")).select("c", "groups.*")
-    s.show()
-    s.groupBy("c","u").agg(count("u"),first("c")).show()
-  }
+
   "StreamProcessor" should "trending topics of the countries" in {
     val streamProcessor = StreamProcessor.create(spark)
 
-    val data = List(rsvp, rsvp1, rsvp2).toDF()
+    val data = List(rsvp, rsvp, rsvp).toDF()
     val result = streamProcessor.trendingTopicsByCountry(data)
-    result.show()
     val excepted =
       Seq(("us", "Classic Books", 3L), ("us", "Toxic Relationships", 3L))
         .toDF("country", "topic_name", "count")
 
-    //assertSmallDatasetEquality(result, excepted)
+    assertSmallDatasetEquality(result, excepted)
   }
-/*
+
   it should "aggregate topics by country" in {
     val streamProcessor = StreamProcessor.create(spark)
 
@@ -151,7 +133,7 @@ class StreamProcessorSpec
     val result =
       streamProcessor.findMostPopularLocationsInTheWorldByEventId(data)
     result.count() shouldBe 5
-  }*/
+  }
 
 }
 
@@ -203,80 +185,20 @@ object StreamProcessorSpec {
       1584064800000L
     ),
     group = Group(
-      group_id = "group-01",
-      group_urlname = "",
-      group_name = "Group-01",
-      group_city = "any city",
-      group_lat = 0,
-      group_lon = 0,
-      group_country = "us",
-      group_topics = Seq(
-        GroupTopics("classic-books", "Classic Books"),
+      "27031693",
+      "Maple-Valley-Books-and-Beers",
+      "Maple Valley Books and Beers",
+      "Maple Valley",
+      47.4,
+      -122.03,
+      "us",
+      Seq(
+        GroupTopics("classics", "Classic Books"),
         GroupTopics("toxic-relationships", "Toxic Relationships")
       )
     )
   )
 
-  val rsvp1 = Rsvp(
-    venue =
-      Venue("Imbibe Bottle House & Taproom", "26174576", -122.04533, 47.39164),
-    response = "no",
-    member = Member(
-      "Jenny",
-      "7717630",
-      "https://secure.meetupstatic.com/photos/member/d/b/8/a/thumb_289556202.jpeg"
-    ),
-    mtime = 1829314800,
-    event = Event(
-      "rqccmrybcfbqb",
-      "March Monthly Meeting",
-      "https://www.meetup.com/Maple-Valley-Books-and-Beers/events/267847717/",
-      1584064800000L
-    ),
-    group = Group(
-      group_id = "group-02",
-      group_urlname = "",
-      group_name = "Group-03",
-      group_city = "any city",
-      group_lat = 0,
-      group_lon = 0,
-      group_country = "us",
-      group_topics = Seq(
-        GroupTopics("nightlife", "Nightlife"),
-        GroupTopics("diningout", "Dining Out")
-      )
-    )
-  )
-  val rsvp2 = Rsvp(
-    venue =
-      Venue("Imbibe Bottle House & Taproom", "26174576", -122.04533, 47.39164),
-    response = "no",
-    member = Member(
-      "Jenny",
-      "7717630",
-      "https://secure.meetupstatic.com/photos/member/d/b/8/a/thumb_289556202.jpeg"
-    ),
-    mtime = 1829314800,
-    event = Event(
-      "rqccmrybcfbqb",
-      "March Monthly Meeting",
-      "https://www.meetup.com/Maple-Valley-Books-and-Beers/events/267847717/",
-      1584064800000L
-    ),
-    group = Group(
-      group_id = "group-01",
-      group_urlname = "",
-      group_name = "Group-01",
-      group_city = "any city",
-      group_lat = 0,
-      group_lon = 0,
-      group_country = "us",
-      group_topics = Seq(
-        GroupTopics("classic-books", "Classic Books"),
-        GroupTopics("toxic-relationships", "Toxic Relationships")
-      )
-    )
-  )
 }
 
 case class Test(event_id: String,
