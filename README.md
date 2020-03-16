@@ -17,7 +17,7 @@ storing output into external data source.
 sbt "project" test
 sbt "project etl" run
 ``` 
-
+Note: Remove ing_meetup directory if you get any error.
 
 ## Run API service
  This service is responsible for below use cases:
@@ -40,3 +40,5 @@ cd app
 npm install
 npm start
 ```
+
+Open http://localhost:8000/ on browser
