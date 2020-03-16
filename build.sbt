@@ -36,11 +36,25 @@ lazy val ingestion = Project("ingestion", file("ingestion"))
       "org.apache.spark" %% "spark-sql-kafka-0-10" % sparkV, //Structured Streaming + Kafka Integration Guide
       "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV, //spark-streaming-kafka
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
+      "com.lightbend.akka" %% "akka-stream-alpakka-slick" % "1.1.2",
+      ("de.heikoseeberger" %% "akka-http-circe" % "1.31.0")
+        .excludeAll(ExclusionRule("com.typesafe.akka")),
+      "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      "com.typesafe.slick" %% "slick" % "3.3.1",
+      "org.slf4j" % "slf4j-nop" % "1.7.26",
+      "org.postgresql" % "postgresql" % "42.2.11",
+      "com.h2database" % "h2" % "1.4.200" % Test,
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.3.1",
       "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckV % Test
-    )
+    ) ++ Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser"
+    ).map(_ % circeVersion)
   )
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(AshScriptPlugin)

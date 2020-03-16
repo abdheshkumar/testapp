@@ -24,12 +24,16 @@ object IngestionApp extends App {
       )
     }
   }
-
+  val dbSession = DBSession.forConfig("slick-postgres", system.settings.config)
+  val tableIngestion = new IngestionKafkaToPostgres()
+  val meetUpByEventTableStreamOutput = tableIngestion.meetUpByEventTableStream("meetup_by_event_id", dbSession)
+  val trendingTableStreamOutput = tableIngestion.trendingTableStream("trending", dbSession)
   val cs: CoordinatedShutdown = CoordinatedShutdown(system)
   cs.addTask(
     CoordinatedShutdown.PhaseServiceStop,
     "shut-down-client-http-pool"
   )(() => {
+    dbSession.close()
     Http()(system)
       .shutdownAllConnectionPools()
       .map(_ => {
@@ -38,6 +42,8 @@ object IngestionApp extends App {
         Done
       })
   })
+  meetUpByEventTableStreamOutput.onComplete(f=> println(s"Completed meetup_by_event stream: ${f}"))
+  trendingTableStreamOutput.onComplete(f=> println(s"Completed trending stream: ${f}"))
   connected.onComplete {
     case Failure(exception) =>
       exception.printStackTrace()

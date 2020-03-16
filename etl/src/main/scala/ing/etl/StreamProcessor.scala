@@ -12,33 +12,25 @@ trait StreamProcessor extends HelperFunctions {
   /**
     * Process most popular events happening in the world and materialized in external sink
     * @param stream: DataFrame input stream
-    * @param writeTable
     * @return
     */
   def processMostPopularEventsStream(
     stream: DataFrame
-  )(writeTable: String => ExternalJdbcWriter): StreamingQuery = {
-    val jdbcWriter = writeTable(Constants.meetupByEventIdTable)
-    jdbcWriter.writeDataIntoExternalSource(
-      stream,
-      Constants.meetupByEventIdTable
-    )(findMostPopularLocationsInTheWorldByEventId)
+  )(writer: WriteIntoExternalSource): StreamingQuery = {
+    writer.writeDataIntoExternalSource(stream)(
+      findMostPopularLocationsInTheWorldByEventId
+    )
   }
 
   /**
     * Process most trending topics by country and materialzed aggregation in external sink
     * @param stream DataFrame input stream
-    * @param writeTable
     * @return
     */
   def processTrendingTopicsStream(
     stream: DataFrame
-  )(writeTable: String => ExternalJdbcWriter): StreamingQuery = {
-    val jdbcWriter = writeTable(Constants.trendingTopicsTable)
-    jdbcWriter.writeDataIntoExternalSource(
-      stream,
-      Constants.trendingTopicsTable
-    )(trendingTopicsByCountry)
+  )(writer: WriteIntoExternalSource): StreamingQuery = {
+    writer.writeDataIntoExternalSource(stream)(trendingTopicsByCountry)
   }
 
   /**

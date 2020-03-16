@@ -5,7 +5,8 @@ object Constants {
   val NO = "no"
   val meetupByEventIdTable = "meetup.meetup_by_event_id"
   val trendingTopicsTable = "meetup.trending"
-
+  val trendingEvents = "trendingEvents"
+  val trendingTopics = "trendingTopics"
   val postgresProperties: collection.Map[String, String] = scala.collection.Map(
     "url" -> "jdbc:postgresql://localhost/postgres",
     "dbtable" -> "meetup.meetup_by_event_id",

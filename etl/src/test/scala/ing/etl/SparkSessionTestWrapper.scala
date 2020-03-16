@@ -17,9 +17,7 @@ trait SparkSessionTestWrapper {
   implicit class Ops(df: DataFrame) {
     def setNullableStateOfColumn(cn: (String, Boolean)*): DataFrame = {
 
-      // get schema
       val schema = df.schema
-      // modify [[StructField] with name `cn`
       val newSchema = StructType(schema.map { s =>
         cn.find(_._1 == s.name) match {
           case Some((_, nullable)) =>
