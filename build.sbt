@@ -46,8 +46,8 @@ lazy val ingestion = Project("ingestion", file("ingestion"))
       "org.postgresql" % "postgresql" % "42.2.11",
       "com.h2database" % "h2" % "1.4.200" % Test,
       "com.typesafe.slick" %% "slick-hikaricp" % "3.3.1",
-      "com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
-      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      /*"com.typesafe.akka" %% "akka-slf4j" % AkkaVersion,
+      "ch.qos.logback" % "logback-classic" % "1.2.3",*/
       "org.scalatest" %% "scalatest" % scalaTestV % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckV % Test
     ) ++ Seq(

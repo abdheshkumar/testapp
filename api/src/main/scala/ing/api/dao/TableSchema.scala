@@ -11,7 +11,7 @@ trait TableSchema { self: DBProfile =>
   import profile.api._
 
   private[dao] class TrendingTopicTable(tag: Tag)
-      extends Table[TrendingTopic](tag, Some("meetup"), "trending") {
+      extends Table[TrendingTopic](tag, Some("meetup"), "trending_topic") {
     def country: Rep[String] =
       column[String]("country")
     def topics: Rep[String] = column[String]("topic_name")
@@ -22,7 +22,7 @@ trait TableSchema { self: DBProfile =>
   }
 
   private[dao] class MeetUpTable(tag: Tag)
-      extends Table[MeetUp](tag, Some("meetup"), "meetup_by_event_id") {
+      extends Table[MeetUp](tag, Some("meetup"), "trending_events") {
     def eventId: Rep[String] = column[String]("event_id", O.PrimaryKey)
     def eventName: Rep[String] = column[String]("event_name")
     def groupId: Rep[String] = column[String]("group_id")

@@ -39,7 +39,6 @@ CREATE TABLE meetup.trending_topic
 (
     country    text,
     topic_name text,
-    urlkey text,
     count      int,
-    PRIMARY KEY ( country, urlkey )
+    PRIMARY KEY ( country, topic_name )
 );

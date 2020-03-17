@@ -13,7 +13,7 @@ object IngestionApp extends App {
   import system.dispatcher
   val rsvpStream = RsvpStream(system, materializer)
 
-  /*val (upgradeResponse, promise) = rsvpStream.start()
+  val (upgradeResponse, promise) = rsvpStream.start()
   val connected: Future[Done.type] = upgradeResponse.flatMap { upgrade =>
     if (upgrade.response.status == StatusCodes.SwitchingProtocols) {
       println("Connection Established..")
@@ -23,11 +23,13 @@ object IngestionApp extends App {
         new RuntimeException(s"Connection failed: ${upgrade.response.status}")
       )
     }
-  }*/
+  }
   val dbSession = DBSession.forConfig("slick-postgres", system.settings.config)
   val tableIngestion = new IngestionKafkaToPostgres()
-  //val meetUpByEventTableStreamOutput = tableIngestion.meetUpByEventTableStream("meetup_by_event_id", dbSession)
-  val trendingTableStreamOutput = tableIngestion.trendingTableStream("trendingTopics", dbSession)
+  val meetUpByEventTableStreamOutput =
+    tableIngestion.meetUpByEventTableStream("trendingEvents", dbSession)
+  val trendingTableStreamOutput =
+    tableIngestion.trendingTableStream("trendingTopics", dbSession)
   val cs: CoordinatedShutdown = CoordinatedShutdown(system)
   cs.addTask(
     CoordinatedShutdown.PhaseServiceStop,
@@ -38,17 +40,21 @@ object IngestionApp extends App {
       .shutdownAllConnectionPools()
       .map(_ => {
         println("Stopping......")
-        //promise.success(None) //at some later time we want to disconnect
+        promise.success(None) //at some later time we want to disconnect
         Done
       })
   })
-  //meetUpByEventTableStreamOutput.onComplete(f=> println(s"Completed meetup_by_event stream: ${f}"))
-  trendingTableStreamOutput.onComplete(f=> println(s"Completed trending stream: ${f}"))
- /* connected.onComplete {
+  meetUpByEventTableStreamOutput.onComplete(
+    f => println(s"Completed meetup_by_event stream: ${f}")
+  )
+  trendingTableStreamOutput.onComplete(
+    f => println(s"Completed trending stream: ${f}")
+  )
+  connected.onComplete {
     case Failure(exception) =>
       exception.printStackTrace()
       sys.error(exception.getMessage)
     case Success(_) =>
       println("Started websocket client....")
-  }*/
+  }
 }
